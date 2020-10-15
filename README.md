@@ -1,4 +1,4 @@
-# vuefabric
+# vuefabric 简易画板
 
 ## Project setup
 ```
