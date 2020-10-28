@@ -9,7 +9,7 @@
         <input type="range" name="vol" min="1" max="100" v-model="width">
       </div>
       <div class="brushWidth">
-         <label >字体大象:</label>
+         <label >字体大小:</label>
         <input type="range" name="vol" min="18" max="50" v-model="fontSize">
       </div>
       <button @click="freeDraw()" class="freeDrawBtn">自由绘制</button>
