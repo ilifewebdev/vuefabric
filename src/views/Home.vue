@@ -6,11 +6,21 @@
       </div>
       <div class="brushWidth">
          <label >画笔线条粗细:</label>
-        <input type="range" name="vol" min="1" max="50" v-model="width">
+        <input type="range" name="vol" min="1" max="100" v-model="width">
+      </div>
+      <div class="brushWidth">
+         <label >字体大象:</label>
+        <input type="range" name="vol" min="18" max="50" v-model="fontSize">
       </div>
       <button @click="freeDraw()" class="freeDrawBtn">自由绘制</button>
       <button @click="lineDraw()" class="lineDrawBtn">直线</button>
+      <button @click="circleDraw()" class="cricleDrawBtn">圆</button>
+      <button @click="rectDraw()" class="rectDrawBtn">矩形</button>
+      <button @click="triangleDraw()" class="triangleDrawBtn">三角形</button>
+      <button @click="textDraw()" class="textDrawBtn">文本</button>
       <button @click="clear()" class="clearBtn">清除</button>
+      <button @click="selectDraw()" class="selectDrawBtn">可选中</button>
+      <button @click="unselectDraw()" class="selectDrawBtn">不可选中</button>
     </div>
     <canvas id="c" width="1440" height="600"></canvas>
   </div>
@@ -31,9 +41,11 @@ export default {
       colors:'#000000',
       width:1,
       strokeWidth:1,
+      fontSize:18,
       showColorPicker:false,
       canvas:null,
       drawingObject:null,
+      textObject:null,
       mouseFrom: {},
       mouseTo: {},
       currentType:'free',
@@ -73,62 +85,189 @@ export default {
     freeDraw(){
       this.canvas.isDrawingMode = true;
       this.currentType = 'free';
-      this.resetLine();
     },
     lineDraw(){
       this.currentType = 'line';
       this.ininLine();
-      this.resetLine();
     },
-    ininLine(){
+    circleDraw(){
+      this.currentType = 'circle';
+      this.initCircle();
+    },
+    rectDraw(){
+      this.currentType = 'rect';
+      this.initRect();
+    },
+    triangleDraw(){
+      this.currentType = 'triangle';
+      this.initTriangle();
+    },
+    textDraw(){
+      this.currentType = 'text';
+    },
+   
+    toggleDrawingObject(canvasObject){
       this.canvas.isDrawingMode = false;
       this.canvas.selection = false;
-      let canvasObject = new fabric.Line([this.mouseFrom.x, this.mouseFrom.y, this.mouseTo.x, this.mouseTo.y], {
-        fill: this.colors,
-        stroke: this.colors,
-        strokeWidth: this.strokeWidth
-      });
       canvasObject.selectable = false;
       if (this.drawingObject) {
         this.canvas.remove(this.drawingObject);
       }
       this.canvas.add(canvasObject);
       this.drawingObject = canvasObject;
+
+      if (this.textObject) {
+        this.textObject.exitEditing();
+        this.textObject = null;
+      }
+
+    },
+    ininLine(){
+      let canvasObject = new fabric.Line([this.mouseFrom.x, this.mouseFrom.y, this.mouseTo.x, this.mouseTo.y], {
+        fill: this.colors,
+        stroke: this.colors,
+        strokeWidth: this.strokeWidth
+      });
+      this.toggleDrawingObject(canvasObject);
+    },
+    initCircle(){
+      let left = this.mouseFrom.x;
+      let top = this.mouseFrom.y;
+      let radius = Math.sqrt((this.mouseTo.x - left) * (this.mouseTo.x - left) + (this.mouseTo.y - top) * (this.mouseTo.y - top)) / 2;
+      let  canvasObject = new fabric.Circle({
+          left: left,
+          top: top,
+          stroke: this.colors,
+          fill: "rgba(255, 255, 255, 0)",
+          radius: radius,
+          strokeWidth: this.strokeWidth
+        });
+      this.toggleDrawingObject(canvasObject);
+    },
+    initRect(){
+      let left = this.mouseFrom.x;
+      let top = this.mouseFrom.y;
+      let width = this.mouseTo.x - this.mouseFrom.x;
+      let height = this.mouseTo.y - this.mouseFrom.y;
+      let  canvasObject = new fabric.Rect({
+          left: left,
+          top: top,
+          width : width, 
+          height : height,
+          stroke: this.colors,
+          fill: "rgba(255, 255, 255, 0)",
+          strokeWidth: this.strokeWidth
+        });
+      this.toggleDrawingObject(canvasObject);
+    },
+    initTriangle(){
+      let left = this.mouseFrom.x;
+      let top = this.mouseFrom.y;
+      let height = this.mouseTo.y - this.mouseFrom.y;
+      let width = Math.sqrt(Math.pow(height, 2) + Math.pow(height / 2.0, 2));
+      let  canvasObject = new fabric.Triangle({
+          left: left,
+          top: top,
+          width : width, 
+          height : height,
+          stroke: this.colors,
+          fill: "rgba(255, 255, 255, 0)",
+          strokeWidth: this.strokeWidth
+        });
+      this.toggleDrawingObject(canvasObject);
+    },
+   initText(){
+      this.canvas.isDrawingMode = false;
+      this.canvas.selection = false;
+      this.textObject = new fabric.Textbox("", {
+          left: this.mouseFrom.x,
+          top: this.mouseFrom.y,
+          fontSize: this.fontSize,
+          fill: this.colors,
+          hasControls: false
+        });
+      this.canvas.add(this.textObject);
+      this.textObject.enterEditing();
+      this.textObject.hiddenTextarea.focus();
     },
     initEvent(){
+      let eventType = ['line','circle','rect','triangle','text'];
       this.canvas.on('mouse:down', (options) => {
-        if(this.currentType == 'line'){
+        if(eventType.indexOf(this.currentType) != -1){
           this.mouseFrom.x = options.e.clientX;
           this.mouseFrom.y = options.e.clientY - 50;
           this.idDrawing = true;
+          switch(this.currentType){
+            case 'text':
+              this.initText();
+              break;
+            default:
+              break;
+          }
         }
       });
       this.canvas.on('mouse:move', (options) => {
-        if(this.idDrawing && this.currentType == 'line'){
+        if(this.idDrawing && eventType.indexOf(this.currentType) != -1){
           this.mouseTo.x = options.e.clientX;
           this.mouseTo.y = options.e.clientY - 50;
-          this.ininLine();
+          switch(this.currentType){
+            case 'line':
+              this.ininLine();
+              break;
+            case 'circle':
+              this.initCircle();
+              break;
+            case 'rect':
+              this.initRect();
+              break;
+            case 'triangle':
+              this.initTriangle();
+              break;
+            
+            default:
+              break;
+          }
         }
       });
       this.canvas.on("mouse:up", (options) => {
-        if(this.currentType == 'line'){
+        if(eventType.indexOf(this.currentType) != -1){
           this.mouseTo.x = options.e.clientX;
           this.mouseTo.y = options.e.clientY - 50;
           this.drawingObject = null;
           this.idDrawing = false;
+          this.resetMove();
         }
       }); 
        
     },
-    resetLine(){
+    resetMove(){
       this.mouseFrom = {};
-      this.mouseTo = {};
+      this.mouseTo = {};      
+    },
+    removeTextObject(){
+      this.currentType = '';
+      if (this.textObject) {
+        this.textObject.exitEditing();
+        this.textObject = null;
+      }
     },
     clear(){
       this.canvas.clear();
       this.canvas.backgroundColor = '#efefef';
-      this.resetLine();
-    }
+      this.resetMove();
+    },
+    selectDraw(){
+      this.removeTextObject();
+      this.canvas.getObjects().map(item =>{
+        item.set('selectable', true)
+      });
+    },
+    unselectDraw(){
+      this.removeTextObject();
+      this.canvas.getObjects().map(item =>{
+        item.set('selectable', false)
+      });
+    },
   },
   mounted(){
     this.initBrushColor();
@@ -164,7 +303,7 @@ export default {
     margin-left: 10px;
   }
   
-  .freeDrawBtn,.lineDrawBtn,.clearBtn{
+  .freeDrawBtn,.lineDrawBtn,.cricleDrawBtn, .rectDrawBtn,.triangleDrawBtn,.textDrawBtn,.clearBtn,.selectDrawBtn{
     margin-left: 10px;
     &:hover{
       cursor: pointer;
