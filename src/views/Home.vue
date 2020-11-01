@@ -18,6 +18,9 @@
       <button @click="rectDraw()" class="rectDrawBtn">矩形</button>
       <button @click="triangleDraw()" class="triangleDrawBtn">三角形</button>
       <button @click="textDraw()" class="textDrawBtn">文本</button>
+      <button @click="imgDraw()" class="imgDrawBtn">本地图片</button>
+      <input type="file" accept="image/*" style="display:none" id="uploadfile" @change="uploadFile" />
+      
       <button @click="clear()" class="clearBtn">清除</button>
       <button @click="selectDraw()" class="selectDrawBtn">可选中</button>
       <button @click="unselectDraw()" class="selectDrawBtn">不可选中</button>
@@ -105,7 +108,24 @@ export default {
     textDraw(){
       this.currentType = 'text';
     },
-   
+    imgDraw(){
+      document.getElementById("uploadfile").click();
+    },
+    uploadFile(e){
+      this.canvas.isDrawingMode = false;
+      this.removeTextObject();
+      var file = e.target.files[0];
+      var reader = new FileReader();
+      reader.onload = (e) => {
+        var data = e.target.result;                    
+        fabric.Image.fromURL(data, (img) => { 
+          this.canvas.add(img).renderAll();
+        });
+      };
+      reader.readAsDataURL(file);
+      e.target.value='';
+    },
+
     toggleDrawingObject(canvasObject){
       this.canvas.isDrawingMode = false;
       this.canvas.selection = false;
@@ -303,7 +323,9 @@ export default {
     margin-left: 10px;
   }
   
-  .freeDrawBtn,.lineDrawBtn,.cricleDrawBtn, .rectDrawBtn,.triangleDrawBtn,.textDrawBtn,.clearBtn,.selectDrawBtn{
+  .freeDrawBtn,.lineDrawBtn,.cricleDrawBtn,.rectDrawBtn,
+  .triangleDrawBtn,.textDrawBtn,.clearBtn,
+  .selectDrawBtn,.imgDrawBtn{
     margin-left: 10px;
     &:hover{
       cursor: pointer;
