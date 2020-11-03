@@ -20,7 +20,8 @@
       <button @click="textDraw()" class="textDrawBtn">文本</button>
       <button @click="imgDraw()" class="imgDrawBtn">本地图片</button>
       <input type="file" accept="image/*" style="display:none" id="uploadfile" @change="uploadFile" />
-      
+      <button @click="undoDraw()" class="undoBtn" >撤销</button>
+      <button @click="redoDraw()" class="redoBtn" >重做</button>
       <button @click="clear()" class="clearBtn">清除</button>
       <button @click="selectDraw()" class="selectDrawBtn">可选中</button>
       <button @click="unselectDraw()" class="selectDrawBtn">不可选中</button>
@@ -53,11 +54,13 @@ export default {
       mouseTo: {},
       currentType:'free',
       idDrawing:false,
+      
+      stateArr:[],
+      isRedoing:false,
     }
   },
   watch: {
-    width: function (val) {
-      console.log(val);
+    width: function () {
       this.canvas.freeDrawingBrush.width = parseInt(this.width, 10);
       this.strokeWidth = parseInt(this.width, 10);
     },
@@ -67,7 +70,6 @@ export default {
       this.$refs.brushColor.style.backgroundColor = this.colors;
     },
     updateValue(val){
-      console.log(val);
       this.colors = val.hex;
       this.initBrushColor();
       this.canvas.freeDrawingBrush.color = this.colors;
@@ -80,6 +82,7 @@ export default {
         this.canvas = new fabric.Canvas("c");
         this.canvas.backgroundColor = '#efefef';
         this.canvas.isDrawingMode= 1;
+        this.state =  JSON.stringify(this.canvas);
       }
       this.canvas.freeDrawingBrush.color = this.colors;
       this.canvas.freeDrawingBrush.width = this.width;
@@ -89,6 +92,7 @@ export default {
       this.canvas.isDrawingMode = true;
       this.currentType = 'free';
     },
+   
     lineDraw(){
       this.currentType = 'line';
       this.ininLine();
@@ -257,9 +261,33 @@ export default {
           this.idDrawing = false;
           this.resetMove();
         }
+      });
+
+      this.canvas.on('object:added', () => {
+        if(this.isRedoing == false){
+          this.stateArr = [];
+        }
       }); 
+     
        
     },
+
+
+     undoDraw(){
+      if(this.canvas._objects.length > 0){
+        this.stateArr.push(this.canvas._objects.pop());
+        this.canvas.renderAll();
+      }
+    },
+
+     redoDraw(){
+      if(this.stateArr.length > 0){
+        this.isRedoing = true;
+        this.canvas.add(this.stateArr.pop());
+        this.canvas.renderAll();
+      }
+    },
+   
     resetMove(){
       this.mouseFrom = {};
       this.mouseTo = {};      
@@ -275,6 +303,7 @@ export default {
       this.canvas.clear();
       this.canvas.backgroundColor = '#efefef';
       this.resetMove();
+   
     },
     selectDraw(){
       this.removeTextObject();
@@ -325,7 +354,7 @@ export default {
   
   .freeDrawBtn,.lineDrawBtn,.cricleDrawBtn,.rectDrawBtn,
   .triangleDrawBtn,.textDrawBtn,.clearBtn,
-  .selectDrawBtn,.imgDrawBtn{
+  .selectDrawBtn,.imgDrawBtn,.undoBtn,.redoBtn{
     margin-left: 10px;
     &:hover{
       cursor: pointer;
