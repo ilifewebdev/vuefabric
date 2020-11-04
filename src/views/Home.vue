@@ -22,6 +22,7 @@
       <input type="file" accept="image/*" style="display:none" id="uploadfile" @change="uploadFile" />
       <button @click="undoDraw()" class="undoBtn" >撤销</button>
       <button @click="redoDraw()" class="redoBtn" >重做</button>
+      <button @click="exportCanvas()" class="exportBtn">导出</button>
       <button @click="clear()" class="clearBtn">清除</button>
       <button @click="selectDraw()" class="selectDrawBtn">可选中</button>
       <button @click="unselectDraw()" class="selectDrawBtn">不可选中</button>
@@ -303,8 +304,27 @@ export default {
       this.canvas.clear();
       this.canvas.backgroundColor = '#efefef';
       this.resetMove();
+      this.isRedoing = false;
+      this.stateArr = [];
    
     },
+
+    exportCanvas(){
+      const dataURL = this.canvas.toDataURL({
+        width: this.canvas.width,
+        height: this.canvas.height,
+        left: 0,
+        top: 0,
+        format: 'png',
+      });
+      const link = document.createElement('a');
+      link.download = 'canvas.png';
+      link.href = dataURL;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    },
+    
     selectDraw(){
       this.removeTextObject();
       this.canvas.getObjects().map(item =>{
@@ -354,7 +374,7 @@ export default {
   
   .freeDrawBtn,.lineDrawBtn,.cricleDrawBtn,.rectDrawBtn,
   .triangleDrawBtn,.textDrawBtn,.clearBtn,
-  .selectDrawBtn,.imgDrawBtn,.undoBtn,.redoBtn{
+  .selectDrawBtn,.imgDrawBtn,.undoBtn,.redoBtn,.exportBtn{
     margin-left: 10px;
     &:hover{
       cursor: pointer;
