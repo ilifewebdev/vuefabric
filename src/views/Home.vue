@@ -90,6 +90,7 @@ export default {
       this.canvas.renderAll();
     },
     freeDraw(){
+      this.removeTextObject();
       this.canvas.isDrawingMode = true;
       this.currentType = 'free';
     },
@@ -112,6 +113,11 @@ export default {
     },
     textDraw(){
       this.currentType = 'text';
+      this.canvas.isDrawingMode = false;
+      this.canvas.selection = false;
+      if (this.drawingObject) {
+        this.canvas.remove(this.drawingObject);
+      }
     },
     imgDraw(){
       document.getElementById("uploadfile").click();
@@ -218,7 +224,9 @@ export default {
     initEvent(){
       let eventType = ['line','circle','rect','triangle','text'];
       this.canvas.on('mouse:down', (options) => {
+        
         if(eventType.indexOf(this.currentType) != -1){
+          console.log('111');
           this.mouseFrom.x = options.e.clientX;
           this.mouseFrom.y = options.e.clientY - 50;
           this.idDrawing = true;
@@ -233,6 +241,7 @@ export default {
       });
       this.canvas.on('mouse:move', (options) => {
         if(this.idDrawing && eventType.indexOf(this.currentType) != -1){
+          console.log('xxxx');
           this.mouseTo.x = options.e.clientX;
           this.mouseTo.y = options.e.clientY - 50;
           switch(this.currentType){
@@ -255,7 +264,9 @@ export default {
         }
       });
       this.canvas.on("mouse:up", (options) => {
+        
         if(eventType.indexOf(this.currentType) != -1){
+          console.log('xxxx11');
           this.mouseTo.x = options.e.clientX;
           this.mouseTo.y = options.e.clientY - 50;
           this.drawingObject = null;
@@ -265,7 +276,9 @@ export default {
       });
 
       this.canvas.on('object:added', () => {
+        
         if(this.isRedoing == false){
+          console.log('xxxx333');
           this.stateArr = [];
         }
       }); 
@@ -296,6 +309,7 @@ export default {
     removeTextObject(){
       this.currentType = '';
       if (this.textObject) {
+        console.log('remove text');
         this.textObject.exitEditing();
         this.textObject = null;
       }
